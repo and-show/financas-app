@@ -11,18 +11,25 @@ O que ela faz:
   - **Entrada:** vai para o quadro de Entradas da aba do mês.
 - **Atalhos:** os gastos que você mais lança viram botões de um toque.
 - **Últimos lançamentos com Desfazer:** se errou, toca em Desfazer e a linha sai da planilha.
-- **Tela Parcelas:** mostra o que está ativo, quantas parcelas faltam, e tem o botão **Encerrar** para assinaturas fixas.
-- **Funciona sem internet:** sem sinal, o lançamento fica guardado no celular e vai sozinho quando a conexão voltar.
+- **Tela Resumo** (precisa do `Code.gs` novo, veja "Atualizar o script"):
+  - saldo, entradas, saídas e sobra de qualquer mês, com setas para navegar;
+  - gastos **por categoria**, com aviso quando passa do "Valor esperado" da planilha. Tocar numa categoria filtra os lançamentos;
+  - **por cartão / forma**, com a marca de pago ou a pagar;
+  - **sobra prevista no ano**: um gráfico com os 12 meses do Panorama anual (tem também a versão em tabela);
+  - todos os lançamentos do mês (fixos, gastos do mês e cartão) e as entradas.
+- **Tela Parcelas:** quanto do cartão já está comprometido por mês, quanto falta pagar, as **próximas 6 faturas**, quando termina cada parcelamento e o botão **Encerrar** para assinaturas fixas.
+- **Modo privado (👁):** borra os valores para abrir o app em público.
+- **Funciona sem internet:** sem sinal, o lançamento fica guardado no celular e vai sozinho quando a conexão voltar. O topo mostra quando os dados foram atualizados; toque ali para atualizar.
 
 Arquivos:
-- `Code.gs`: o servidor, que fica dentro da planilha.
+- `apps-script/Code.gs`: o servidor, que fica dentro da planilha.
 - `index.html`, `sw.js`, `manifest.webmanifest`, `icon-192.png`, `icon-512.png`: o site, que vai para o GitHub.
 
 ---
 
 ## Parte 1 — Script na planilha
 
-1. Na planilha: **Extensões → Apps Script**. Apague o código antigo e cole todo o `Code.gs`.
+1. Na planilha: **Extensões → Apps Script**. Apague o código antigo e cole todo o `apps-script/Code.gs`.
 2. Na função `configurar` (no topo do arquivo), preencha:
    - `PIN`: um PIN seu (obrigatório).
    - `GEMINI_KEY`: sua chave do Gemini, criada no Google AI Studio (opcional, liga o "escrever o gasto").
@@ -31,6 +38,13 @@ Arquivos:
 5. **Implantar:**
    - **Primeira vez:** Implantar → Nova implantação → App da Web. Executar como: **Eu**. Quem pode acessar: **Qualquer pessoa**. Copie o endereço que termina em `/exec`.
    - **Se já tinha a versão 1:** Implantar → **Gerenciar implantações** → lápis → Versão: **Nova versão** → Implantar. O endereço continua o mesmo.
+
+### Atualizar o script (para a tela Resumo)
+
+A tela Resumo usa uma leitura nova do script (`painel`). Sem ela, o app continua funcionando e o Resumo mostra só o mês atual, com um aviso.
+
+1. **Extensões → Apps Script**, apague o código e cole o `apps-script/Code.gs` novo. **Não precisa rodar `configurar` de novo**: o PIN e a chave continuam guardados.
+2. **Implantar → Gerenciar implantações** → lápis → Versão: **Nova versão** → Implantar. O endereço `/exec` continua o mesmo.
 
 > Se o "Preencher" der erro de modelo do Gemini, vá em ⚙️ Configurações do projeto → Propriedades do script e crie `GEMINI_MODEL` com o nome de um modelo atual que sua chave aceite.
 

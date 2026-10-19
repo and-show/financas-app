@@ -34,6 +34,7 @@ function doGet(e) {
   const p = (e && e.parameter) || {};
   try {
     if (!pinOk(p.pin)) return json({ ok: false, erro: 'PIN incorreto.' });
+    if (p.acao === 'painel') return json({ ok: true, painel: painel(p.aba) });
     return json(Object.assign({ ok: true }, inicio()));
   } catch (err) {
     return json({ ok: false, erro: String(err.message || err) });
@@ -246,6 +247,50 @@ function parcelamentosAtivos() {
     });
   });
   return out.sort((a, b) => (a.fixa === b.fixa ? (a.restantes || 0) - (b.restantes || 0) : a.fixa ? -1 : 1));
+}
+
+/* Tela Resumo: panorama do ano + detalhes de um mês (lidos de uma vez só) */
+function painel(aba) {
+  const hoje = new Date();
+  aba = aba || nomeAba(hoje.getFullYear(), hoje.getMonth() + 1);
+  const num = v => Number(v) || 0;
+
+  const pan = planilha().getSheetByName('Panorama anual');
+  let panorama = [];
+  if (pan) {
+    const faixa = pan.getRange('B6:E17');
+    const v = faixa.getValues(), t = faixa.getDisplayValues();
+    panorama = v.map((r, i) => ({ aba: t[i][0], gastos: num(r[1]), entradas: num(r[2]), sobra: num(r[3]) }))
+      .filter(m => m.aba);
+  }
+
+  const sh = planilha().getSheetByName(aba);
+  if (!sh) return { aba, panorama, mes: null };
+  const faixa = sh.getRange(1, 1, Math.max(sh.getLastRow(), 30), 23);
+  const v = faixa.getValues(), t = faixa.getDisplayValues();
+  const linhas = (de, ate) => v.slice(de - 1, ate).map((r, i) => ({ r, t: t[de - 1 + i] }));
+
+  return {
+    aba, panorama,
+    mes: {
+      saldo: num(v[1][17]), totalGastos: num(v[1][3]), entradas: num(v[14][17]),
+      saldoAnterior: num(v[15][17]), previstos: num(v[25][17]),
+      fixos: num(v[5][6]), cartao: num(v[22][6]), gastosMes: num(v[5][13]),
+      categorias: linhas(4, 22).filter(x => String(x.r[19]).trim())
+        .map(x => ({ nome: x.r[19], esperado: num(x.r[20]), gasto: num(x.r[21]) })),
+      pagamentos: linhas(25, 30).filter(x => String(x.r[19]).trim())
+        .map(x => ({ nome: x.r[19], valor: num(x.r[20]), pago: x.r[22] === true })),
+      listaEntradas: linhas(9, 14).filter(x => String(x.r[16]).trim() && num(x.r[17]))
+        .map(x => ({ nome: x.r[16], valor: num(x.r[17]) })),
+      itens: []
+        .concat(linhas(10, 22).filter(x => String(x.r[2]).trim() && num(x.r[8])).map(x => (
+          { grupo: 'Fixo', nome: x.r[2], info: x.t[5], cartao: x.r[6], categoria: x.r[7], valor: num(x.r[8]), pago: x.r[4] === true })))
+        .concat(linhas(10, 54).filter(x => String(x.r[10]).trim() && num(x.r[14])).map(x => (
+          { grupo: 'Gasto do mês', nome: x.r[10], info: x.t[11], cartao: x.r[12], categoria: x.r[13], valor: num(x.r[14]) })))
+        .concat(linhas(27, v.length).filter(x => String(x.r[2]).trim() && num(x.r[8])).map(x => (
+          { grupo: 'Cartão', nome: x.r[2], info: x.t[3], cartao: x.r[6], categoria: x.r[7], valor: num(x.r[8]) })))
+    }
+  };
 }
 
 /* =========================================================

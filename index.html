@@ -15,7 +15,7 @@
 <style>
   :root {
     --bg: #F3F5F4; --surface: #FFFFFF; --ink: #18211F; --muted: #5E6B68;
-    --line: #DCE2E0; --accent: #1F5F55; --accent-ink: #FFFFFF; --erro: #B3261E; --alerta: #C0392B;
+    --line: #DCE2E0; --accent: #1F5F55; --accent-soft: #CFE5DF; --accent-ink: #FFFFFF; --erro: #B3261E; --alerta: #C0392B;
     --mae: #FCD9E6; --adson: #CFE3FA; --handel: #E0D4F7; --emprestimo: #FCE3C7;
     --debito: #D9F0D4; --outro: #E6EAE9; --chip-ink: #18211F;
     --display: "Bricolage Grotesque", system-ui, sans-serif;
@@ -24,7 +24,7 @@
   @media (prefers-color-scheme: dark) {
     :root {
       --bg: #121715; --surface: #1B2220; --ink: #E8EEEC; --muted: #93A19D;
-      --line: #2C3633; --accent: #6FC1AE; --accent-ink: #0E1C19; --erro: #F2B8B5; --alerta: #F28B82;
+      --line: #2C3633; --accent: #6FC1AE; --accent-soft: #24443D; --accent-ink: #0E1C19; --erro: #F2B8B5; --alerta: #F28B82;
       color-scheme: dark;
     }
   }
@@ -33,27 +33,50 @@
   body {
     font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     padding: env(safe-area-inset-top, 0px) 0 calc(96px + env(safe-area-inset-bottom, 0px));
+    -webkit-tap-highlight-color: transparent;
   }
-  main { max-width: 480px; margin: 0 auto; padding: 16px 18px; }
-  header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
-  h1 { font: 700 1.3rem/1.1 var(--display); margin: 0; flex: 1; }
+  main { max-width: 480px; margin: 0 auto; padding: 14px 18px; }
+  header { display: flex; align-items: center; gap: 8px; }
+  .titulo { flex: 1; min-width: 0; }
+  h1 { font: 700 1.3rem/1.1 var(--display); margin: 0; }
+  .sync { background: none; border: 0; padding: 2px 0; color: var(--muted); font: .78rem/1.2 system-ui, sans-serif; }
+  .sync.velho { color: var(--alerta); }
   h2 { font: 700 1.05rem/1.2 var(--display); margin: 28px 0 10px; }
-  .icon-btn { background: none; border: 1px solid var(--line); color: var(--muted); border-radius: 10px; padding: 7px 11px; font: inherit; font-size: .88rem; }
-  .icon-btn[aria-current="page"] { color: var(--ink); border-color: var(--ink); }
+  .h2-linha { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin: 28px 0 10px; }
+  .h2-linha h2 { margin: 0; }
+  .icon-btn { background: none; border: 1px solid var(--line); color: var(--muted); border-radius: 10px; min-width: 40px; height: 38px; padding: 0 10px; font: inherit; font-size: .95rem; display: inline-grid; place-items: center; }
+  .icon-btn[aria-pressed="true"] { color: var(--ink); border-color: var(--ink); }
+  .icon-btn svg { width: 18px; height: 18px; }
   [hidden] { display: none !important; }
-  input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  input:focus-visible, select:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-  /* resumo do mês */
-  .resumo { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  /* abas */
+  nav.abas { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--line); margin: 12px 0 16px; }
+  nav.abas button { background: none; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; color: var(--muted); font: 600 .95rem/1 system-ui, sans-serif; padding: 12px 4px; }
+  nav.abas button[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); }
+
+  /* modo privado: esconde os valores */
+  body.privado .dinheiro { filter: blur(7px); }
+
+  /* cartões de resumo */
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  button.card { display: block; width: 100%; text-align: left; font: inherit; color: inherit; }
   .resumo-topo { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
-  .resumo-topo small { color: var(--muted); }
+  .resumo-topo small, .card small { color: var(--muted); }
   .saldo { font: 700 1.6rem/1.1 var(--display); }
-  .saldo.neg { color: var(--alerta); }
+  .saldo.grande { font-size: 2.1rem; }
+  .neg { color: var(--alerta); }
   .barra { position: relative; height: 10px; border-radius: 6px; background: var(--line); margin: 12px 0 6px; overflow: visible; }
   .barra i { position: absolute; inset: 0 auto 0 0; border-radius: 6px; background: var(--accent); max-width: 100%; }
   .barra i.estourou { background: var(--alerta); }
   .barra b { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--ink); }
-  .resumo p { margin: 0; font-size: .88rem; color: var(--muted); }
+  .card p { margin: 0; font-size: .88rem; color: var(--muted); }
+  .ver-mais { display: block; margin-top: 8px; color: var(--accent); font-size: .85rem; font-weight: 600; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; }
+  .stats div { min-width: 0; }
+  .stats small { display: block; font-size: .78rem; }
+  .stats strong { display: block; font: 700 1rem/1.2 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .detalhe { font-size: .82rem; color: var(--muted); margin-top: 10px; }
 
   /* IA */
   .ia { display: flex; gap: 8px; margin-top: 14px; }
@@ -82,7 +105,7 @@
   .chips { display: flex; flex-wrap: wrap; gap: 8px; }
   .chip { border: 2px solid transparent; border-radius: 999px; padding: 8px 14px; font: 600 .9rem/1 system-ui, sans-serif; color: var(--chip-ink); background: var(--outro); }
   .chip[aria-pressed="true"] { border-color: var(--chip-ink); box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent); }
-  .tag { display: inline-block; border-radius: 999px; padding: 2px 9px; font-size: .78rem; font-weight: 600; color: var(--chip-ink); background: var(--outro); }
+  .tag { display: inline-block; border-radius: 999px; padding: 2px 9px; font-size: .78rem; font-weight: 600; color: var(--chip-ink); background: var(--outro); vertical-align: 1px; }
 
   .parcelas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
   .parcelas button { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px; padding: 11px 4px; font: 600 .88rem/1.1 system-ui, sans-serif; }
@@ -94,6 +117,13 @@
   .aviso.erro { color: var(--erro); border-color: var(--erro); }
   .fila { margin: 0 0 12px; padding: 10px 14px; border-radius: 12px; background: var(--surface); border: 1px dashed var(--muted); font-size: .9rem; }
 
+  /* aviso flutuante */
+  .toast { position: fixed; left: 50%; bottom: calc(88px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 12px); width: min(444px, calc(100vw - 36px));
+    background: var(--ink); color: var(--bg); border-radius: 12px; padding: 12px 14px; font-size: .93rem; box-shadow: 0 6px 24px rgba(0,0,0,.18); opacity: 0; pointer-events: none; z-index: 10; }
+  .toast.vis { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+  .toast.erro { background: var(--erro); color: #fff; }
+  body.sem-acao .toast { bottom: calc(18px + env(safe-area-inset-bottom, 0px)); }
+
   /* listas */
   ul.lista { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
   ul.lista li { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; padding: 12px 0; border-bottom: 1px solid var(--line); align-items: center; }
@@ -101,10 +131,56 @@
   ul.lista .info { font-size: .84rem; color: var(--muted); grid-column: 1; }
   ul.lista .lado { grid-row: 1 / span 2; grid-column: 2; text-align: right; }
   ul.lista .lado strong { display: block; font-family: var(--display); }
+  ul.lista .lado small { display: block; color: var(--muted); font-size: .78rem; }
   .link { background: none; border: 0; color: var(--accent); font: 600 .85rem/1 system-ui, sans-serif; padding: 6px 0; }
   .vazio { color: var(--muted); font-size: .92rem; }
   .progresso { height: 4px; border-radius: 3px; background: var(--line); margin-top: 6px; overflow: hidden; }
   .progresso i { display: block; height: 100%; background: var(--accent); }
+
+  /* resumo: mês */
+  .mes-nav { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+  .mes-nav strong { font: 700 1.15rem/1 var(--display); }
+  .mes-nav .icon-btn:disabled { opacity: .35; }
+  .carregando { font-size: .8rem; color: var(--muted); }
+
+  /* barras horizontais (categorias) */
+  .hbarras { list-style: none; margin: 0; padding: 0; }
+  .hbarras li + li { margin-top: 4px; }
+  .hbarras button { display: block; width: 100%; background: none; border: 0; border-radius: 10px; padding: 8px 6px; margin: 0 -6px; width: calc(100% + 12px); color: inherit; font: inherit; text-align: left; }
+  .hbarras button[aria-pressed="true"] { background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
+  .hb-topo { display: flex; justify-content: space-between; gap: 10px; font-size: .92rem; }
+  .hb-topo span:last-child { font-family: var(--display); font-weight: 700; white-space: nowrap; }
+  .hb-topo small { color: var(--muted); font-weight: 400; font-family: system-ui, sans-serif; }
+  .hb-trilho { position: relative; height: 8px; border-radius: 4px; background: var(--line); margin-top: 6px; }
+  .hb-trilho i { position: absolute; inset: 0 auto 0 0; border-radius: 4px; background: var(--accent); }
+  .hb-trilho i.acima { background: var(--alerta); }
+  .hb-trilho b { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ink); }
+  .hb-alerta { font-size: .78rem; color: var(--alerta); margin-top: 4px; }
+
+  /* barras verticais (ano e próximos meses) */
+  .grafico { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 2px; }
+  .grafico button { display: flex; flex-direction: column; align-items: stretch; background: none; border: 0; padding: 0; color: var(--muted); font: 600 .72rem/1 system-ui, sans-serif; border-radius: 8px; }
+  .grafico .pos { display: flex; align-items: flex-end; justify-content: center; }
+  .grafico .zero { display: flex; align-items: flex-start; justify-content: center; border-top: 1px solid var(--muted); }
+  .grafico i { display: block; width: 62%; max-width: 26px; background: var(--accent); opacity: .4; }
+  .grafico .pos i { border-radius: 4px 4px 0 0; }
+  .grafico .zero i { border-radius: 0 0 4px 4px; background: var(--alerta); }
+  .grafico button[aria-pressed="true"] i { opacity: 1; }
+  .grafico button[aria-pressed="true"] { color: var(--ink); }
+  .grafico .rotulo { padding: 6px 0 4px; text-align: center; }
+  .legenda-graf { font-size: .88rem; margin: 10px 0 0; min-height: 2.6em; }
+  details.tabela { margin-top: 10px; font-size: .88rem; }
+  details.tabela summary { color: var(--accent); font-weight: 600; cursor: pointer; padding: 6px 0; }
+  details.tabela table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+  details.tabela th, details.tabela td { padding: 6px 4px; border-bottom: 1px solid var(--line); text-align: right; }
+  details.tabela th:first-child, details.tabela td:first-child { text-align: left; }
+  details.tabela th { color: var(--muted); font-weight: 600; }
+
+  .filtro { display: flex; align-items: center; gap: 8px; font-size: .88rem; margin-bottom: 8px; }
+  .pago { font-size: .78rem; font-weight: 600; }
+  .pago.sim { color: var(--accent); }
+  .pago.nao { color: var(--muted); }
+  .nota { margin-top: 16px; padding: 12px 14px; border-radius: 12px; font-size: .88rem; background: var(--accent-soft); color: var(--ink); }
 
   .acao { position: fixed; left: 0; right: 0; bottom: 0; background: var(--bg); padding: 12px 18px calc(12px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--line); }
   .acao button { display: block; width: 100%; max-width: 444px; margin: 0 auto; border: 0; border-radius: 14px; background: var(--accent); color: var(--accent-ink); font: 700 1.05rem/1 var(--display); padding: 17px; }
@@ -116,30 +192,44 @@
   dialog .botoes { display: flex; gap: 10px; margin-top: 20px; }
   dialog .botoes button { flex: 1; padding: 12px; border-radius: 12px; font: 600 .95rem/1 system-ui, sans-serif; border: 1px solid var(--line); background: none; color: var(--ink); }
   dialog .botoes button.principal { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
-  @media (prefers-reduced-motion: no-preference) { .chip, .modo button, .parcelas button, .barra i { transition: background .15s, border-color .15s, width .4s; } }
+  @media (prefers-reduced-motion: no-preference) {
+    .chip, .modo button, .parcelas button, .barra i, .hb-trilho i { transition: background .15s, border-color .15s, width .4s; }
+    .toast { transition: opacity .2s, transform .2s; }
+  }
 </style>
 </head>
 <body>
 <main>
   <header>
-    <h1>Finanças</h1>
-    <button class="icon-btn" data-view="lancar" aria-current="page" type="button">Lançar</button>
-    <button class="icon-btn" data-view="parcelas" type="button">Parcelas</button>
+    <div class="titulo">
+      <h1>Finanças</h1>
+      <button class="sync" id="sync" type="button" aria-label="Atualizar dados da planilha"></button>
+    </div>
+    <button class="icon-btn" id="privado" type="button" aria-pressed="false" aria-label="Esconder valores">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+    </button>
     <button class="icon-btn" id="abrirConfig" type="button" aria-label="Ajustes">⚙︎</button>
   </header>
+
+  <nav class="abas" aria-label="Telas">
+    <button data-view="lancar" aria-current="page" type="button">Lançar</button>
+    <button data-view="resumo" type="button">Resumo</button>
+    <button data-view="parcelas" type="button">Parcelas</button>
+  </nav>
 
   <div class="fila" id="fila" hidden></div>
 
   <!-- ===== Tela: lançar ===== -->
   <section id="viewLancar">
-    <div class="resumo" id="resumo" hidden>
+    <button class="card" id="resumo" type="button" hidden>
       <div class="resumo-topo">
-        <div><small id="rAba"></small><div class="saldo" id="rSaldo"></div></div>
-        <small id="rPrevistos"></small>
+        <div><small id="rAba"></small><div class="saldo dinheiro" id="rSaldo"></div></div>
+        <small id="rPrevistos" class="dinheiro"></small>
       </div>
       <div class="barra" aria-hidden="true"><i id="rBarra"></i><b id="rLimite"></b></div>
       <p id="rTexto"></p>
-    </div>
+      <span class="ver-mais">Ver resumo do mês ›</span>
+    </button>
 
     <form class="ia" id="iaBox" hidden>
       <input type="text" id="iaTexto" placeholder="Escreva: uber 23,50 débito" autocomplete="off" aria-label="Descreva o gasto">
@@ -202,15 +292,78 @@
     <ul class="lista" id="recentes"></ul>
   </section>
 
+  <!-- ===== Tela: resumo ===== -->
+  <section id="viewResumo" hidden>
+    <div class="mes-nav">
+      <button class="icon-btn" id="mesAnt" type="button" aria-label="Mês anterior">‹</button>
+      <div style="text-align:center"><strong id="pAba"></strong><div class="carregando" id="pCarregando" hidden>atualizando…</div></div>
+      <button class="icon-btn" id="mesProx" type="button" aria-label="Próximo mês">›</button>
+    </div>
+
+    <div class="card">
+      <small id="pSaldoRotulo">Saldo do mês</small>
+      <div class="saldo grande dinheiro" id="pSaldo">—</div>
+      <div class="stats" id="pStats"></div>
+      <div class="barra" aria-hidden="true"><i id="pBarra"></i><b id="pLimite"></b></div>
+      <p id="pBarraTexto"></p>
+      <p class="detalhe dinheiro" id="pDetalhe"></p>
+    </div>
+
+    <div class="nota" id="pNota" hidden></div>
+
+    <div id="blocoCategorias" hidden>
+      <div class="h2-linha"><h2>Por categoria</h2><small class="dica" style="margin:0">toque para filtrar</small></div>
+      <ul class="hbarras" id="pCategorias"></ul>
+    </div>
+
+    <div id="blocoPagamentos" hidden>
+      <h2>Por cartão / forma</h2>
+      <ul class="lista" id="pPagamentos"></ul>
+    </div>
+
+    <div id="blocoAno" hidden>
+      <h2>Sobra prevista no ano</h2>
+      <p class="dica" style="margin:-4px 0 12px">Entradas menos gastos já lançados em cada mês. Toque num mês para abri-lo.</p>
+      <div class="grafico" id="pAno" role="group" aria-label="Sobra por mês"></div>
+      <p class="legenda-graf dinheiro" id="pAnoLegenda"></p>
+      <details class="tabela"><summary>Ver em tabela</summary><table class="dinheiro"><thead><tr><th>Mês</th><th>Entradas</th><th>Gastos</th><th>Sobra</th></tr></thead><tbody id="pAnoTabela"></tbody></table></details>
+    </div>
+
+    <div id="blocoItens" hidden>
+      <h2>Lançamentos do mês</h2>
+      <div class="filtro" id="pFiltro" hidden><span></span><button class="link" type="button" id="limparFiltro">Limpar filtro ✕</button></div>
+      <ul class="lista" id="pItens"></ul>
+    </div>
+
+    <div id="blocoEntradas" hidden>
+      <h2>Entradas</h2>
+      <ul class="lista" id="pEntradas"></ul>
+    </div>
+  </section>
+
   <!-- ===== Tela: parcelas ===== -->
   <section id="viewParcelas" hidden>
-    <h2 style="margin-top:6px">Assinaturas fixas</h2>
+    <div class="card" id="compromisso" hidden>
+      <small>Comprometido por mês no cartão</small>
+      <div class="saldo dinheiro" id="cTotal"></div>
+      <div class="stats" id="cStats"></div>
+    </div>
+
+    <div id="blocoProximos" hidden>
+      <h2>Próximas faturas</h2>
+      <p class="dica" style="margin:-4px 0 12px">Soma das parcelas e assinaturas cadastradas. Gastos novos ainda vão entrar.</p>
+      <div class="grafico" id="cGrafico" role="group" aria-label="Faturas previstas por mês"></div>
+      <p class="legenda-graf dinheiro" id="cLegenda"></p>
+    </div>
+
+    <h2>Assinaturas fixas</h2>
     <ul class="lista" id="listaFixas"></ul>
     <h2>Parcelamentos em andamento</h2>
     <ul class="lista" id="listaParcelas"></ul>
   </section>
 </main>
 
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="acao" id="barraAcao"><button id="salvar" type="button">Salvar na planilha</button></div>
 
 <dialog id="config">
@@ -242,12 +395,14 @@ const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov'
 const CORES = { 'Mãe': 'var(--mae)', 'Adson': 'var(--adson)', 'Handel': 'var(--handel)', 'Empréstimo Mãe': 'var(--emprestimo)', 'Débito': 'var(--debito)' };
 const $ = id => document.getElementById(id);
 const brl = v => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-const estado = { modo: 'cartao', parcelas: '1', cartao: null, dados: null, encerrarId: null };
+const brlCurto = v => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
+const estado = { modo: 'cartao', parcelas: '1', cartao: null, dados: null, encerrarId: null, view: 'lancar', abaResumo: null, filtroCat: null, semPainel: false };
 
 /* ---------- armazenamento local ---------- */
 function ler(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
 function gravar(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
-function lerFila() { try { return JSON.parse(ler('fila') || '[]'); } catch (e) { return []; } }
+function lerJSON(k) { try { return JSON.parse(ler(k) || 'null'); } catch (e) { return null; } }
+function lerFila() { return lerJSON('fila') || []; }
 function gravarFila(f) { gravar('fila', JSON.stringify(f)); mostrarFila(); }
 function novoUid() { return (crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).slice(2)); }
 
@@ -255,16 +410,19 @@ function novoUid() { return (crypto.randomUUID ? crypto.randomUUID() : Date.now(
 function hojeISO() { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); }
 function mesISO(offset) { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() + offset); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
 function nomeAba(ym) { const [a, m] = ym.split('-').map(Number); return MESES[m - 1] + '/' + String(a).slice(2); }
+// "Out/26" <-> número de meses corridos, para contas de parcelas
+function idxAba(aba) { const [m, a] = String(aba).split('/'); return (2000 + Number(a)) * 12 + MESES.indexOf(m); }
+function abaDeIdx(i) { return MESES[i % 12] + '/' + String(Math.floor(i / 12)).slice(2); }
 
 /* ---------- comunicação ---------- */
 class ErroRede extends Error {}
-async function api(corpo) {
+async function api(corpo, query) {
   const url = ler('url'), pin = ler('pin');
   if (!url || !pin) { $('config').showModal(); throw new Error('Configure o endereço e o PIN em Ajustes.'); }
   let r;
   try {
     r = corpo ? await fetch(url, { method: 'POST', body: JSON.stringify(Object.assign({ pin }, corpo)) })
-              : await fetch(url + '?pin=' + encodeURIComponent(pin));
+              : await fetch(url + '?' + new URLSearchParams(Object.assign({ pin }, query || {})));
   } catch (e) { throw new ErroRede('Sem conexão com a planilha.'); }
   const d = await r.json();
   if (!d.ok) throw new Error(d.erro || 'Erro desconhecido.');
@@ -272,6 +430,28 @@ async function api(corpo) {
 }
 
 function aviso(texto, erro) { const a = $('aviso'); a.textContent = texto || ''; a.hidden = !texto; a.classList.toggle('erro', !!erro); }
+
+let toastTimer;
+function toast(texto, erro) {
+  const t = $('toast');
+  t.textContent = texto; t.classList.toggle('erro', !!erro); t.classList.add('vis');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('vis'), erro ? 6000 : 3500);
+}
+$('toast').onclick = () => $('toast').classList.remove('vis');
+
+/* ---------- última atualização ---------- */
+function mostrarSync() {
+  const t = Number(ler('dadosEm')), s = $('sync');
+  if (!ler('url')) { s.textContent = 'Toque em ⚙︎ para conectar'; return; }
+  if (!t) { s.textContent = 'Toque para atualizar ⟳'; return; }
+  const min = Math.round((Date.now() - t) / 60000);
+  const quando = min < 1 ? 'agora' : min < 60 ? `há ${min} min` :
+    new Date(t).toDateString() === new Date().toDateString() ? 'às ' + new Date(t).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) :
+    'em ' + new Date(t).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+  s.textContent = `Atualizado ${quando} ⟳`;
+  s.classList.toggle('velho', min > 60 * 12);
+}
 
 /* ---------- renderização ---------- */
 function render(d) {
@@ -285,6 +465,7 @@ function render(d) {
   montarAtalhos(d.atalhos || []);
   montarParcelas(d.parcelamentos || []);
   $('iaBox').hidden = !d.ia;
+  if (estado.view === 'resumo') montarPainel(lerJSON('painel:' + estado.abaResumo));
 }
 
 function montarResumo(r) {
@@ -294,14 +475,19 @@ function montarResumo(r) {
   $('rSaldo').textContent = brl(r.saldo);
   $('rSaldo').classList.toggle('neg', r.saldo < 0);
   $('rPrevistos').textContent = r.previstos > 0 ? 'já descontando ' + brl(r.previstos) + ' previstos' : '';
-  const pct = Math.max(0, r.pct || 0);
-  $('rBarra').style.width = Math.min(pct * 100, 100) + '%';
-  $('rBarra').classList.toggle('estourou', pct > r.limite);
-  $('rLimite').style.left = Math.min(r.limite * 100, 100) + '%';
-  $('rTexto').textContent = `Cartão: ${brl(r.cartao)}, ${Math.round(pct * 100)}% das entradas (limite ${Math.round(r.limite * 100)}%).`;
+  barraLimite($('rBarra'), $('rLimite'), r.pct || 0, r.limite);
+  $('rTexto').innerHTML = `Cartão: <span class="dinheiro">${brl(r.cartao)}</span>, ${Math.round(Math.max(0, r.pct || 0) * 100)}% das entradas (limite ${Math.round(r.limite * 100)}%).`;
+}
+
+function barraLimite(barra, marca, pct, limite) {
+  pct = Math.max(0, pct);
+  barra.style.width = Math.min(pct * 100, 100) + '%';
+  barra.classList.toggle('estourou', pct > limite);
+  marca.style.left = Math.min(limite * 100, 100) + '%';
 }
 
 function corDe(nome) { return CORES[nome] || 'var(--outro)'; }
+function tagDe(nome) { const t = document.createElement('span'); t.className = 'tag'; t.textContent = nome; t.style.background = corDe(nome); return t; }
 
 function montarCartoes(lista) {
   const box = $('cartoes'); box.innerHTML = '';
@@ -350,8 +536,9 @@ function montarRecentes(lista) {
   if (!lista.length) { ul.innerHTML = '<li class="vazio">Os lançamentos feitos por aqui aparecem nesta lista.</li>'; return; }
   lista.forEach(x => {
     const li = document.createElement('li');
-    li.innerHTML = `<span class="nome"></span><span class="info"></span><span class="lado"><strong></strong><button class="link" type="button">Desfazer</button></span>`;
-    li.querySelector('.nome').textContent = x.descricao;
+    li.innerHTML = `<span class="nome"></span><span class="info"></span><span class="lado"><strong class="dinheiro"></strong><button class="link" type="button">Desfazer</button></span>`;
+    li.querySelector('.nome').textContent = x.descricao + ' ';
+    if (x.cartao) li.querySelector('.nome').appendChild(tagDe(x.cartao));
     li.querySelector('.info').textContent = `${x.aba}, ${x.quando}`;
     li.querySelector('strong').textContent = (x.tipo === 'entrada' ? '+ ' : '') + brl(x.valor);
     li.querySelector('button').onclick = () => desfazer(x);
@@ -367,10 +554,9 @@ function montarParcelas(lista) {
   if (!outras.length) ulP.innerHTML = '<li class="vazio">Nenhum parcelamento ativo.</li>';
   lista.forEach(p => {
     const li = document.createElement('li');
-    li.innerHTML = `<span class="nome"></span><span class="info"></span><span class="lado"><strong></strong></span>`;
+    li.innerHTML = `<span class="nome"></span><span class="info"></span><span class="lado"><strong class="dinheiro"></strong></span>`;
     li.querySelector('.nome').textContent = p.descricao + ' ';
-    const tag = document.createElement('span'); tag.className = 'tag'; tag.textContent = p.cartao; tag.style.background = corDe(p.cartao);
-    li.querySelector('.nome').appendChild(tag);
+    li.querySelector('.nome').appendChild(tagDe(p.cartao));
     li.querySelector('strong').textContent = brl(p.valor);
     const info = li.querySelector('.info');
     if (p.fixa) {
@@ -380,14 +566,233 @@ function montarParcelas(lista) {
       li.querySelector('.lado').appendChild(b);
       ulF.appendChild(li);
     } else {
-      info.textContent = p.futuro ? `Começa em ${p.inicio}, ${p.total}x` :
-        `Parcela ${p.atual} de ${p.total}, ${p.restantes === 1 ? 'última' : 'faltam ' + p.restantes}`;
+      const fim = abaDeIdx(idxAba(p.inicio) + p.total - 1);
+      info.textContent = p.futuro ? `Começa em ${p.inicio}, ${p.total}x, até ${fim}` :
+        `Parcela ${p.atual} de ${p.total}, ${p.restantes === 1 ? 'última' : 'faltam ' + p.restantes + ', até ' + fim}`;
+      const falta = document.createElement('small'); falta.className = 'dinheiro';
+      falta.textContent = p.restantes > 1 ? 'falta ' + brl(p.valor * p.restantes) : '';
+      li.querySelector('.lado').appendChild(falta);
       const barra = document.createElement('div'); barra.className = 'progresso';
       barra.innerHTML = `<i style="width:${Math.round((p.futuro ? 0 : p.atual) / p.total * 100)}%"></i>`;
       info.appendChild(barra);
       ulP.appendChild(li);
     }
   });
+  montarCompromisso(lista);
+}
+
+/* Quanto do cartão já está comprometido, hoje e nos próximos meses */
+function montarCompromisso(lista) {
+  $('compromisso').hidden = $('blocoProximos').hidden = !lista.length;
+  if (!lista.length) return;
+  const hoje = idxAba(nomeAba(mesISO(0)));
+  const noMes = i => lista.filter(p => { const ini = idxAba(p.inicio); return i >= ini && (p.fixa || i < ini + p.total); });
+  const soma = l => l.reduce((s, p) => s + p.valor, 0);
+  const atual = noMes(hoje);
+  const fixas = soma(atual.filter(p => p.fixa)), parc = soma(atual.filter(p => !p.fixa));
+  const falta = lista.filter(p => !p.fixa).reduce((s, p) => s + p.valor * p.restantes, 0);
+  $('cTotal').textContent = brl(fixas + parc);
+  $('cStats').innerHTML = '';
+  [['Assinaturas', fixas], ['Parcelas', parc], ['Falta pagar', falta]].forEach(([r, v]) => {
+    $('cStats').insertAdjacentHTML('beforeend', `<div><small>${r}</small><strong class="dinheiro">${brl(v)}</strong></div>`);
+  });
+
+  const meses = Array.from({ length: 6 }, (_, k) => {
+    const l = noMes(hoje + k);
+    return { aba: abaDeIdx(hoje + k), valor: soma(l), itens: l.length, acabam: lista.filter(p => !p.fixa && idxAba(p.inicio) + p.total - 1 === hoje + k).length };
+  });
+  let sel = 0;
+  const legenda = () => {
+    const m = meses[sel];
+    $('cLegenda').innerHTML = `<strong>${m.aba}:</strong> ${brl(m.valor)} em ${m.itens} ${m.itens === 1 ? 'item' : 'itens'}` +
+      (m.acabam ? `, ${m.acabam} ${m.acabam === 1 ? 'termina' : 'terminam'} nesse mês.` : '.');
+  };
+  graficoBarras($('cGrafico'), meses.map(m => ({ rotulo: m.aba.split('/')[0], valor: m.valor, nome: m.aba })), 0, i => { sel = i; legenda(); });
+  legenda();
+}
+
+/* Barras verticais simples, com zero no meio quando há negativos. Toque seleciona. */
+function graficoBarras(box, dados, selecionado, aoTocar) {
+  const H = 120;
+  const maxPos = Math.max(0, ...dados.map(d => d.valor)), maxNeg = Math.max(0, ...dados.map(d => -d.valor));
+  const total = maxPos + maxNeg || 1;
+  const hPos = Math.round(H * maxPos / total), hNeg = H - hPos;
+  box.innerHTML = '';
+  dados.forEach((d, i) => {
+    const b = document.createElement('button'); b.type = 'button';
+    b.setAttribute('aria-pressed', String(i === selecionado));
+    b.setAttribute('aria-label', `${d.nome}: ${brl(d.valor)}`);
+    const alt = v => v ? Math.max(3, Math.round(Math.abs(v) / total * H)) : 0;
+    b.innerHTML = `<span class="pos" style="height:${hPos}px"><i style="height:${d.valor > 0 ? alt(d.valor) : 0}px"></i></span>` +
+      `<span class="zero" style="height:${hNeg}px"><i style="height:${d.valor < 0 ? alt(d.valor) : 0}px"></i></span>` +
+      `<span class="rotulo">${d.rotulo}</span>`;
+    b.onclick = () => {
+      box.querySelectorAll('button').forEach((x, j) => x.setAttribute('aria-pressed', String(j === i)));
+      aoTocar(i);
+    };
+    box.appendChild(b);
+  });
+}
+
+/* ---------- tela Resumo ---------- */
+async function abrirResumo(aba) {
+  if (aba && aba !== estado.abaResumo) estado.filtroCat = null;
+  estado.abaResumo = aba || estado.abaResumo || nomeAba(mesISO(0));
+  montarPainel(lerJSON('painel:' + estado.abaResumo));
+  if (!navigator.onLine || !ler('url') || !ler('pin')) return;
+  const pedida = estado.abaResumo;
+  $('pCarregando').hidden = false;
+  try {
+    const d = await api(null, { acao: 'painel', aba: pedida });
+    if (!d.painel) {            // script antigo: responde só os dados da tela inicial
+      estado.semPainel = true; render(d);
+    } else {
+      estado.semPainel = false;
+      gravar('painel:' + d.painel.aba, JSON.stringify(d.painel));
+      if (d.painel.panorama.length) gravar('panorama', JSON.stringify(d.painel.panorama));
+    }
+    if (pedida === estado.abaResumo) montarPainel(d.painel || null);
+  } catch (e) {
+    if (!(e instanceof ErroRede)) toast('Resumo: ' + e.message, true);
+  } finally { $('pCarregando').hidden = true; }
+}
+
+function montarPainel(p) {
+  const aba = estado.abaResumo, r = estado.dados && estado.dados.resumo;
+  const panorama = (p && p.panorama.length ? p.panorama : lerJSON('panorama')) || [];
+  const meses = panorama.length ? panorama.map(m => m.aba) : [aba];
+  const pos = meses.indexOf(aba);
+  $('pAba').textContent = aba;
+  $('mesAnt').disabled = pos <= 0; $('mesProx').disabled = pos === -1 || pos >= meses.length - 1;
+  $('mesAnt').onclick = () => abrirResumo(meses[pos - 1]);
+  $('mesProx').onclick = () => abrirResumo(meses[pos + 1]);
+
+  const m = p && p.mes;
+  const limite = (r && r.limite) || 0.5;
+  let stats, pct;
+  if (m) {
+    const sobra = m.entradas - m.totalGastos;
+    $('pSaldo').textContent = brl(m.saldo);
+    $('pSaldo').classList.toggle('neg', m.saldo < 0);
+    $('pSaldoRotulo').textContent = m.saldoAnterior ? `Saldo do mês (com ${brl(m.saldoAnterior)} do mês anterior)` : 'Saldo do mês';
+    stats = [['Entradas', m.entradas], ['Saídas', m.totalGastos], ['Sobra', sobra]];
+    pct = m.entradas > 0 ? m.cartao / m.entradas : 0;
+    $('pBarraTexto').textContent = `Cartão: ${Math.round(pct * 100)}% das entradas (limite ${Math.round(limite * 100)}%).`;
+    $('pDetalhe').textContent = `Saídas = cartão ${brl(m.cartao)} + gastos do mês ${brl(m.gastosMes)}` + (m.fixos ? ` + fixos ${brl(m.fixos)}` : '') + '.' +
+      (m.previstos ? ` Previstos: ${brl(m.previstos)}.` : '');
+  } else if (r && r.aba === aba) {
+    $('pSaldo').textContent = brl(r.saldo);
+    $('pSaldo').classList.toggle('neg', r.saldo < 0);
+    $('pSaldoRotulo').textContent = 'Saldo do mês';
+    stats = [['Entradas', r.entradas], ['Cartão', r.cartao], ['Gastos do mês', r.gastos]];
+    pct = r.pct || 0;
+    $('pBarraTexto').textContent = `Cartão: ${Math.round(pct * 100)}% das entradas (limite ${Math.round(limite * 100)}%).`;
+    $('pDetalhe').textContent = r.previstos ? `Já descontando ${brl(r.previstos)} previstos.` : '';
+  } else {
+    $('pSaldo').textContent = '—'; $('pSaldo').classList.remove('neg');
+    $('pSaldoRotulo').textContent = 'Saldo do mês';
+    stats = []; pct = 0;
+    $('pBarraTexto').textContent = navigator.onLine ? 'Carregando…' : 'Sem internet: esse mês ainda não foi aberto neste aparelho.';
+    $('pDetalhe').textContent = '';
+  }
+  $('pStats').innerHTML = '';
+  stats.forEach(([rot, v]) => $('pStats').insertAdjacentHTML('beforeend',
+    `<div><small>${rot}</small><strong class="dinheiro${v < 0 ? ' neg' : ''}">${brl(v)}</strong></div>`));
+  barraLimite($('pBarra'), $('pLimite'), pct, limite);
+
+  $('pNota').hidden = !estado.semPainel;
+  $('pNota').textContent = 'Para ver categorias, cartões, o ano inteiro e os lançamentos de cada mês, atualize o script da planilha com o Code.gs novo (README, "Atualizar o script").';
+
+  $('blocoCategorias').hidden = $('blocoPagamentos').hidden = $('blocoItens').hidden = !m;
+  $('blocoEntradas').hidden = !m || !m.listaEntradas.length;
+  $('blocoAno').hidden = !panorama.length;
+  if (panorama.length) montarAno(panorama, aba);
+  if (!m) return;
+  montarCategoriasMes(m);
+  montarPagamentos(m.pagamentos);
+  montarItens(m.itens);
+  montarEntradas(m.listaEntradas);
+}
+
+function montarCategoriasMes(m) {
+  const ul = $('pCategorias'); ul.innerHTML = '';
+  const lista = m.categorias.filter(c => c.gasto > 0 || c.esperado > 0).sort((a, b) => b.gasto - a.gasto);
+  if (!lista.length) { ul.innerHTML = '<li class="vazio">Nada gasto nesse mês ainda.</li>'; return; }
+  const total = lista.reduce((s, c) => s + c.gasto, 0) || 1;
+  const escala = Math.max(...lista.map(c => Math.max(c.gasto, c.esperado))) || 1;
+  lista.forEach(c => {
+    const li = document.createElement('li');
+    const acima = c.esperado > 0 && c.gasto > c.esperado;
+    li.innerHTML = `<button type="button" aria-pressed="${estado.filtroCat === c.nome}">
+      <div class="hb-topo"><span></span><span class="dinheiro">${brl(c.gasto)} <small>${Math.round(c.gasto / total * 100)}%</small></span></div>
+      <div class="hb-trilho"><i class="${acima ? 'acima' : ''}" style="width:${c.gasto / escala * 100}%"></i>${c.esperado > 0 ? `<b style="left:${c.esperado / escala * 100}%"></b>` : ''}</div>
+      ${acima ? `<div class="hb-alerta">▲ <span class="dinheiro">${brl(c.gasto - c.esperado)}</span> acima do esperado (${brl(c.esperado)})</div>` : ''}
+    </button>`;
+    li.querySelector('.hb-topo span').textContent = c.nome;
+    li.querySelector('button').onclick = () => { estado.filtroCat = estado.filtroCat === c.nome ? null : c.nome; montarCategoriasMes(m); montarItens(m.itens); };
+    ul.appendChild(li);
+  });
+}
+
+function montarPagamentos(lista) {
+  const ul = $('pPagamentos'); ul.innerHTML = '';
+  const com = lista.filter(x => x.valor > 0);
+  if (!com.length) { ul.innerHTML = '<li class="vazio">Nenhum gasto nesse mês.</li>'; return; }
+  com.sort((a, b) => b.valor - a.valor).forEach(x => {
+    const li = document.createElement('li');
+    li.innerHTML = `<span class="nome"></span><span class="info"></span><span class="lado"><strong class="dinheiro"></strong></span>`;
+    li.querySelector('.nome').appendChild(tagDe(x.nome));
+    li.querySelector('.info').innerHTML = x.pago ? '<span class="pago sim">✓ Pago</span>' : '<span class="pago nao">○ A pagar</span>';
+    li.querySelector('strong').textContent = brl(x.valor);
+    ul.appendChild(li);
+  });
+}
+
+function montarItens(itens) {
+  const ul = $('pItens'); ul.innerHTML = '';
+  const f = estado.filtroCat;
+  $('pFiltro').hidden = !f;
+  if (f) $('pFiltro').querySelector('span').textContent = 'Só ' + f;
+  const lista = itens.filter(x => !f || x.categoria === f).sort((a, b) => b.valor - a.valor);
+  if (!lista.length) { ul.innerHTML = '<li class="vazio">Nenhum lançamento.</li>'; return; }
+  lista.forEach(x => {
+    const li = document.createElement('li');
+    li.innerHTML = `<span class="nome"></span><span class="info"></span><span class="lado"><strong class="dinheiro"></strong><small></small></span>`;
+    li.querySelector('.nome').textContent = x.nome + ' ';
+    if (x.cartao) li.querySelector('.nome').appendChild(tagDe(x.cartao));
+    const parc = x.grupo === 'Cartão' && /^\d+\/\d+$/.test(x.info) ? 'parcela ' + x.info : x.info;
+    li.querySelector('.info').textContent = [x.grupo, parc, f ? '' : x.categoria].filter(Boolean).join(' · ');
+    li.querySelector('strong').textContent = brl(x.valor);
+    if (x.grupo === 'Fixo') li.querySelector('small').textContent = x.pago ? '✓ pago' : 'a pagar';
+    ul.appendChild(li);
+  });
+}
+
+function montarEntradas(lista) {
+  const ul = $('pEntradas'); ul.innerHTML = '';
+  lista.forEach(x => {
+    const li = document.createElement('li');
+    li.innerHTML = `<span class="nome"></span><span class="lado"><strong class="dinheiro"></strong></span>`;
+    li.querySelector('.nome').textContent = x.nome;
+    li.querySelector('strong').textContent = '+ ' + brl(x.valor);
+    ul.appendChild(li);
+  });
+}
+
+function montarAno(panorama, aba) {
+  const sel = Math.max(0, panorama.findIndex(m => m.aba === aba));
+  const legenda = i => {
+    const m = panorama[i];
+    $('pAnoLegenda').innerHTML = `<strong>${m.aba}:</strong> entradas ${brl(m.entradas)} − gastos ${brl(m.gastos)} = ` +
+      `<strong class="${m.sobra < 0 ? 'neg' : ''}">${m.sobra < 0 ? 'faltam ' + brl(-m.sobra) : 'sobram ' + brl(m.sobra)}</strong>`;
+  };
+  graficoBarras($('pAno'), panorama.map(m => ({ rotulo: m.aba.split('/')[0], valor: m.sobra, nome: m.aba })), sel, i => {
+    if (panorama[i].aba !== estado.abaResumo) abrirResumo(panorama[i].aba);
+  });
+  legenda(sel);
+  $('pAnoTabela').innerHTML = '';
+  panorama.forEach(m => $('pAnoTabela').insertAdjacentHTML('beforeend',
+    `<tr><td>${m.aba}</td><td>${brlCurto(m.entradas)}</td><td>${brlCurto(m.gastos)}</td><td class="${m.sobra < 0 ? 'neg' : ''}">${brlCurto(m.sobra)}</td></tr>`));
 }
 
 /* ---------- modo e campos ---------- */
@@ -398,24 +803,38 @@ function setModo(m) {
   $('blocoData').hidden = m === 'cartao';
   $('blocoPagamento').hidden = m === 'entrada';
   $('atalhos').hidden = m === 'entrada' || !$('atalhos').children.length;
-  $('dicaValor').textContent = m === 'cartao' ? 'Valor de cada parcela.' : m === 'gasto' ? 'Valor do gasto.' : 'Valor que entrou.';
   $('descricao').placeholder = m === 'entrada' ? 'Ex.: FGTS, 13º, freela' : 'Ex.: Mercado, Uber, Claude Code';
   if (m === 'gasto' && estado.dados && estado.dados.cartoes.includes('Débito') && estado.cartao !== 'Débito') escolherCartao('Débito');
+  atualizarDicaValor();
 }
 function setParcelas(p) {
   estado.parcelas = p;
   document.querySelectorAll('.parcelas button').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.p === p)));
   $('blocoQtd').hidden = p !== 'n';
-  atualizarDica();
+  atualizarDica(); atualizarDicaValor();
 }
 function atualizarDica() {
   const m = $('mes').value;
-  $('dicaMes').textContent = m ? `Entra na aba ${nomeAba(m)}` + (estado.parcelas === 'fixa' ? ' e em todos os meses seguintes.' : '.') : '';
+  if (!m) { $('dicaMes').textContent = ''; return; }
+  let txt = `Entra na aba ${nomeAba(m)}`;
+  if (estado.parcelas === 'fixa') txt += ' e em todos os meses seguintes.';
+  else if (estado.parcelas === 'n' && Number($('qtd').value) >= 2) txt += ` e vai até ${abaDeIdx(idxAba(nomeAba(m)) + Number($('qtd').value) - 1)}.`;
+  else txt += '.';
+  $('dicaMes').textContent = txt;
+}
+function atualizarDicaValor() {
+  const m = estado.modo, v = lerValor(), n = Number($('qtd').value);
+  let txt = m === 'cartao' ? 'Valor de cada parcela.' : m === 'gasto' ? 'Valor do gasto.' : 'Valor que entrou.';
+  if (m === 'cartao' && estado.parcelas === 'n' && v > 0 && n >= 2) txt = `${n}x de ${brl(v)} = ${brl(v * n)} no total.`;
+  else if (m === 'cartao' && estado.parcelas === 'fixa' && v > 0) txt = `${brl(v)} todo mês, ${brl(v * 12)} por ano.`;
+  $('dicaValor').textContent = txt;
 }
 
 /* ---------- ações ---------- */
+function lerValor() { return Number($('valor').value.replace(/\s/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.')); }
+
 function montarLancamento() {
-  const valor = Number($('valor').value.replace(/\s/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.'));
+  const valor = lerValor();
   const descricao = $('descricao').value.trim();
   if (!(valor > 0)) throw new Error('Digite um valor maior que zero.');
   if (!descricao) throw new Error('Escreva uma descrição.');
@@ -438,22 +857,25 @@ function montarLancamento() {
 
 async function salvar() {
   let l;
-  try { l = montarLancamento(); } catch (e) { return aviso(e.message, true); }
+  try { l = montarLancamento(); } catch (e) { return toast(e.message, true); }
   const botao = $('salvar'); botao.disabled = true; botao.textContent = 'Salvando…';
   const limpar = () => {
     if (l.cartao) gravar('ultimoCartao', l.cartao);
     if (l.categoria) gravar('ultimaCategoria', l.categoria);
     $('valor').value = ''; $('descricao').value = ''; $('iaTexto').value = '';
+    aviso(''); atualizarDicaValor();
+    if (navigator.vibrate) navigator.vibrate(20);
   };
   try {
     if (!navigator.onLine) throw new ErroRede();
     const d = await api(l);
-    limpar(); render(d.dados); aviso('Salvo. ' + d.msg);
+    limpar(); render(d.dados); gravar('dadosEm', Date.now()); mostrarSync();
+    toast('✓ Salvo. ' + d.msg);
   } catch (e) {
     if (e instanceof ErroRede) {
       gravarFila(lerFila().concat([l])); limpar();
-      aviso('Sem internet: guardei aqui e envio sozinho quando a conexão voltar.');
-    } else aviso('Não salvou: ' + e.message, true);
+      toast('Sem internet: guardei aqui e envio sozinho quando a conexão voltar.');
+    } else toast('Não salvou: ' + e.message, true);
   } finally {
     botao.disabled = false; botao.textContent = 'Salvar na planilha';
   }
@@ -471,11 +893,11 @@ async function enviarFila() {
         render(d.dados);
       } catch (e) {
         if (e instanceof ErroRede) break;
-        aviso(`Um lançamento guardado (${fila[0].descricao}) não foi aceito: ${e.message}`, true);
+        toast(`Um lançamento guardado (${fila[0].descricao}) não foi aceito: ${e.message}`, true);
       }
       fila = fila.slice(1); gravarFila(fila);
     }
-    if (!fila.length) aviso('Lançamentos guardados enviados para a planilha.');
+    if (!fila.length) toast('✓ Lançamentos guardados enviados para a planilha.');
   } finally { enviando = false; }
 }
 function mostrarFila() {
@@ -486,8 +908,8 @@ function mostrarFila() {
 
 async function desfazer(x) {
   if (!confirm(`Desfazer "${x.descricao}" de ${brl(x.valor)}? A linha sai da planilha.`)) return;
-  try { const d = await api({ acao: 'desfazer', uid: x.uid }); render(d.dados); aviso(d.msg); }
-  catch (e) { aviso('Não desfez: ' + e.message, true); }
+  try { const d = await api({ acao: 'desfazer', uid: x.uid }); render(d.dados); toast(d.msg); }
+  catch (e) { toast('Não desfez: ' + e.message, true); }
 }
 
 function abrirEncerrar(p) {
@@ -500,8 +922,8 @@ $('encCancelar').onclick = () => $('dlgEncerrar').close();
 $('encConfirmar').onclick = async () => {
   const mes = $('encMes').value; if (!mes) return;
   $('dlgEncerrar').close();
-  try { const d = await api({ acao: 'encerrar', id: estado.encerrarId, mes }); render(d.dados); alert(d.msg); }
-  catch (e) { alert('Não encerrou: ' + e.message); }
+  try { const d = await api({ acao: 'encerrar', id: estado.encerrarId, mes }); render(d.dados); toast(d.msg); }
+  catch (e) { toast('Não encerrou: ' + e.message, true); }
 };
 
 $('iaBox').onsubmit = async ev => {
@@ -517,12 +939,13 @@ $('iaBox').onsubmit = async ev => {
     if (l.categoria) $('categoria').value = l.categoria;
     if (l.tipo === 'cartao') {
       if (l.parcelas === 'fixa') setParcelas('fixa');
-      else if (Number(l.parcelas) > 1) { setParcelas('n'); $('qtd').value = l.parcelas; }
+      else if (Number(l.parcelas) > 1) { $('qtd').value = l.parcelas; setParcelas('n'); }
       else setParcelas('1');
       if (l.mes) { $('mes').value = l.mes; atualizarDica(); }
     } else if (l.data) {
-      $('data').value = l.tipo === 'entrada' ? l.data : l.data;
+      $('data').value = l.data;
     }
+    atualizarDicaValor();
     aviso(l.duvida ? l.duvida : 'Confira os campos e toque em Salvar.', !!l.duvida);
   } catch (e) {
     aviso(e instanceof ErroRede ? 'A leitura por IA precisa de internet.' : 'Não entendi: ' + e.message, true);
@@ -530,29 +953,61 @@ $('iaBox').onsubmit = async ev => {
 };
 
 async function carregar() {
-  const cache = ler('dados'); if (cache) { try { render(JSON.parse(cache)); } catch (e) {} }
+  const cache = lerJSON('dados'); if (cache) render(cache);
+  mostrarSync();
   if (!ler('url') || !ler('pin')) { $('config').showModal(); return; }
-  try { render(await api()); await enviarFila(); }
-  catch (e) { if (!(e instanceof ErroRede)) aviso(e.message + ' Confira em Ajustes.', true); else if (!cache) aviso('Sem conexão com a planilha.', true); }
+  $('sync').textContent = 'Atualizando…';
+  try {
+    render(await api()); gravar('dadosEm', Date.now());
+    await enviarFila();
+    if (estado.view === 'resumo') abrirResumo();
+  } catch (e) {
+    if (!(e instanceof ErroRede)) toast(e.message + ' Confira em Ajustes.', true);
+    else if (!cache) toast('Sem conexão com a planilha.', true);
+  } finally { mostrarSync(); }
+}
+
+/* ---------- navegação ---------- */
+function irPara(v) {
+  estado.view = v;
+  document.querySelectorAll('[data-view]').forEach(x => x.dataset.view === v ? x.setAttribute('aria-current', 'page') : x.removeAttribute('aria-current'));
+  $('viewLancar').hidden = v !== 'lancar'; $('viewResumo').hidden = v !== 'resumo'; $('viewParcelas').hidden = v !== 'parcelas';
+  $('barraAcao').hidden = v !== 'lancar';
+  document.body.classList.toggle('sem-acao', v !== 'lancar');
+  if (v === 'resumo') abrirResumo();
+  window.scrollTo(0, 0);
 }
 
 /* ---------- eventos ---------- */
 document.querySelectorAll('.modo button').forEach(b => b.onclick = () => { setModo(b.dataset.modo); aviso(''); });
 document.querySelectorAll('.parcelas button').forEach(b => b.onclick = () => setParcelas(b.dataset.p));
-document.querySelectorAll('[data-view]').forEach(b => b.onclick = () => {
-  const v = b.dataset.view;
-  document.querySelectorAll('[data-view]').forEach(x => x === b ? x.setAttribute('aria-current', 'page') : x.removeAttribute('aria-current'));
-  $('viewLancar').hidden = v !== 'lancar'; $('viewParcelas').hidden = v !== 'parcelas'; $('barraAcao').hidden = v !== 'lancar';
-});
+document.querySelectorAll('[data-view]').forEach(b => b.onclick = () => irPara(b.dataset.view));
+$('resumo').onclick = () => irPara('resumo');
+$('limparFiltro').onclick = () => { estado.filtroCat = null; montarPainel(lerJSON('painel:' + estado.abaResumo)); };
 $('mes').oninput = atualizarDica;
+$('qtd').oninput = () => { atualizarDica(); atualizarDicaValor(); };
+$('valor').oninput = atualizarDicaValor;
 $('salvar').onclick = salvar;
+$('sync').onclick = carregar;
+$('privado').onclick = () => {
+  const on = !document.body.classList.contains('privado');
+  document.body.classList.toggle('privado', on); $('privado').setAttribute('aria-pressed', String(on));
+  $('privado').setAttribute('aria-label', on ? 'Mostrar valores' : 'Esconder valores');
+  gravar('privado', on ? '1' : '');
+};
 $('abrirConfig').onclick = () => { $('cfgUrl').value = ler('url'); $('cfgPin').value = ler('pin'); $('config').showModal(); };
 $('cancelarConfig').onclick = () => $('config').close();
 $('salvarConfig').onclick = () => { gravar('url', $('cfgUrl').value.trim()); gravar('pin', $('cfgPin').value.trim()); $('config').close(); carregar(); };
 window.addEventListener('online', enviarFila);
-document.addEventListener('visibilitychange', () => { if (!document.hidden) { enviarFila(); if (navigator.onLine && ler('url')) api().then(render).catch(() => {}); } });
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) return;
+  enviarFila(); mostrarSync();
+  if (navigator.onLine && ler('url')) api().then(d => { render(d); gravar('dadosEm', Date.now()); mostrarSync(); }).catch(() => {});
+});
+setInterval(mostrarSync, 60000);
 
 /* ---------- início ---------- */
+if (ler('privado')) $('privado').click();
 $('mes').value = mesISO(1); $('data').value = hojeISO();
 setModo('cartao'); atualizarDica(); mostrarFila(); carregar();
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
