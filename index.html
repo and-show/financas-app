@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1F5F55">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon-192.png">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Lançar gasto</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F3F5F4; --surface: #FFFFFF; --ink: #18211F; --muted: #5E6B68;
+    --line: #DCE2E0; --accent: #1F5F55; --accent-ink: #FFFFFF; --erro: #B3261E; --alerta: #C0392B;
+    --mae: #FCD9E6; --adson: #CFE3FA; --handel: #E0D4F7; --emprestimo: #FCE3C7;
+    --debito: #D9F0D4; --outro: #E6EAE9; --chip-ink: #18211F;
+    --display: "Bricolage Grotesque", system-ui, sans-serif;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121715; --surface: #1B2220; --ink: #E8EEEC; --muted: #93A19D;
+      --line: #2C3633; --accent: #6FC1AE; --accent-ink: #0E1C19; --erro: #F2B8B5; --alerta: #F28B82;
+      color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); }
+  body {
+    font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    padding: env(safe-area-inset-top, 0px) 0 calc(96px + env(safe-area-inset-bottom, 0px));
+  }
+  main { max-width: 480px; margin: 0 auto; padding: 16px 18px; }
+  header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  h1 { font: 700 1.3rem/1.1 var(--display); margin: 0; flex: 1; }
+  h2 { font: 700 1.05rem/1.2 var(--display); margin: 28px 0 10px; }
+  .icon-btn { background: none; border: 1px solid var(--line); color: var(--muted); border-radius: 10px; padding: 7px 11px; font: inherit; font-size: .88rem; }
+  .icon-btn[aria-current="page"] { color: var(--ink); border-color: var(--ink); }
+  [hidden] { display: none !important; }
+  input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* resumo do mês */
+  .resumo { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .resumo-topo { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .resumo-topo small { color: var(--muted); }
+  .saldo { font: 700 1.6rem/1.1 var(--display); }
+  .saldo.neg { color: var(--alerta); }
+  .barra { position: relative; height: 10px; border-radius: 6px; background: var(--line); margin: 12px 0 6px; overflow: visible; }
+  .barra i { position: absolute; inset: 0 auto 0 0; border-radius: 6px; background: var(--accent); max-width: 100%; }
+  .barra i.estourou { background: var(--alerta); }
+  .barra b { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--ink); }
+  .resumo p { margin: 0; font-size: .88rem; color: var(--muted); }
+
+  /* IA */
+  .ia { display: flex; gap: 8px; margin-top: 14px; }
+  .ia input { flex: 1; }
+  .ia button { border: 0; border-radius: 12px; background: var(--ink); color: var(--bg); font: 600 .92rem/1 system-ui, sans-serif; padding: 0 14px; }
+
+  .modo { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 4px; margin-top: 16px; }
+  .modo button { border: 0; background: none; color: var(--muted); font: 600 .9rem/1.1 system-ui, sans-serif; padding: 11px 4px; border-radius: 10px; }
+  .modo button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+
+  .atalhos { display: flex; gap: 8px; overflow-x: auto; padding: 12px 0 2px; scrollbar-width: none; }
+  .atalhos button { flex: none; border: 1px dashed var(--muted); background: none; color: var(--ink); border-radius: 999px; padding: 7px 12px; font: 500 .88rem/1 system-ui, sans-serif; }
+
+  .valor { margin: 22px 0 8px; display: flex; align-items: baseline; gap: 8px; }
+  .valor span { font: 500 1.6rem/1 var(--display); color: var(--muted); }
+  .valor input { flex: 1; min-width: 0; border: 0; background: none; color: var(--ink); font: 700 clamp(2.8rem, 15vw, 4rem)/1 var(--display); letter-spacing: -0.02em; padding: 0; }
+  .valor input::placeholder { color: var(--line); }
+  .valor input:focus { outline: none; }
+  .valor-linha { height: 2px; background: var(--line); }
+  .valor:focus-within + .valor-linha { background: var(--accent); }
+
+  label.campo { display: block; font-size: .85rem; color: var(--muted); margin: 18px 0 6px; }
+  input[type=text], input[type=date], input[type=month], input[type=number], input[type=password], input[type=url], select {
+    width: 100%; font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px;
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { border: 2px solid transparent; border-radius: 999px; padding: 8px 14px; font: 600 .9rem/1 system-ui, sans-serif; color: var(--chip-ink); background: var(--outro); }
+  .chip[aria-pressed="true"] { border-color: var(--chip-ink); box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent); }
+  .tag { display: inline-block; border-radius: 999px; padding: 2px 9px; font-size: .78rem; font-weight: 600; color: var(--chip-ink); background: var(--outro); }
+
+  .parcelas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .parcelas button { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px; padding: 11px 4px; font: 600 .88rem/1.1 system-ui, sans-serif; }
+  .parcelas button[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+  .linha2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .dica { font-size: .85rem; color: var(--muted); margin: 8px 0 0; }
+
+  .aviso { margin-top: 16px; padding: 12px 14px; border-radius: 12px; font-size: .95rem; border: 1px solid var(--line); background: var(--surface); }
+  .aviso.erro { color: var(--erro); border-color: var(--erro); }
+  .fila { margin: 0 0 12px; padding: 10px 14px; border-radius: 12px; background: var(--surface); border: 1px dashed var(--muted); font-size: .9rem; }
+
+  /* listas */
+  ul.lista { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+  ul.lista li { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; padding: 12px 0; border-bottom: 1px solid var(--line); align-items: center; }
+  ul.lista .nome { font-weight: 600; }
+  ul.lista .info { font-size: .84rem; color: var(--muted); grid-column: 1; }
+  ul.lista .lado { grid-row: 1 / span 2; grid-column: 2; text-align: right; }
+  ul.lista .lado strong { display: block; font-family: var(--display); }
+  .link { background: none; border: 0; color: var(--accent); font: 600 .85rem/1 system-ui, sans-serif; padding: 6px 0; }
+  .vazio { color: var(--muted); font-size: .92rem; }
+  .progresso { height: 4px; border-radius: 3px; background: var(--line); margin-top: 6px; overflow: hidden; }
+  .progresso i { display: block; height: 100%; background: var(--accent); }
+
+  .acao { position: fixed; left: 0; right: 0; bottom: 0; background: var(--bg); padding: 12px 18px calc(12px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--line); }
+  .acao button { display: block; width: 100%; max-width: 444px; margin: 0 auto; border: 0; border-radius: 14px; background: var(--accent); color: var(--accent-ink); font: 700 1.05rem/1 var(--display); padding: 17px; }
+  .acao button:disabled { opacity: .55; }
+
+  dialog { border: 1px solid var(--line); border-radius: 16px; background: var(--surface); color: var(--ink); width: min(440px, 92vw); padding: 20px; }
+  dialog::backdrop { background: rgba(0,0,0,.4); }
+  dialog h2 { margin: 0 0 4px; }
+  dialog .botoes { display: flex; gap: 10px; margin-top: 20px; }
+  dialog .botoes button { flex: 1; padding: 12px; border-radius: 12px; font: 600 .95rem/1 system-ui, sans-serif; border: 1px solid var(--line); background: none; color: var(--ink); }
+  dialog .botoes button.principal { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  @media (prefers-reduced-motion: no-preference) { .chip, .modo button, .parcelas button, .barra i { transition: background .15s, border-color .15s, width .4s; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Finanças</h1>
+    <button class="icon-btn" data-view="lancar" aria-current="page" type="button">Lançar</button>
+    <button class="icon-btn" data-view="parcelas" type="button">Parcelas</button>
+    <button class="icon-btn" id="abrirConfig" type="button" aria-label="Ajustes">⚙︎</button>
+  </header>
+
+  <div class="fila" id="fila" hidden></div>
+
+  <!-- ===== Tela: lançar ===== -->
+  <section id="viewLancar">
+    <div class="resumo" id="resumo" hidden>
+      <div class="resumo-topo">
+        <div><small id="rAba"></small><div class="saldo" id="rSaldo"></div></div>
+        <small id="rPrevistos"></small>
+      </div>
+      <div class="barra" aria-hidden="true"><i id="rBarra"></i><b id="rLimite"></b></div>
+      <p id="rTexto"></p>
+    </div>
+
+    <form class="ia" id="iaBox" hidden>
+      <input type="text" id="iaTexto" placeholder="Escreva: uber 23,50 débito" autocomplete="off" aria-label="Descreva o gasto">
+      <button type="submit" id="iaBtn">Preencher</button>
+    </form>
+
+    <div class="modo" role="group" aria-label="Tipo de lançamento">
+      <button type="button" data-modo="cartao" aria-pressed="true">Cartão</button>
+      <button type="button" data-modo="gasto" aria-pressed="false">Gasto do mês</button>
+      <button type="button" data-modo="entrada" aria-pressed="false">Entrada</button>
+    </div>
+
+    <div class="atalhos" id="atalhos" aria-label="Lançamentos frequentes"></div>
+
+    <div class="valor">
+      <span>R$</span>
+      <input id="valor" inputmode="decimal" placeholder="0,00" autocomplete="off" aria-label="Valor">
+    </div>
+    <div class="valor-linha"></div>
+    <p class="dica" id="dicaValor">Valor de cada parcela.</p>
+
+    <label class="campo" for="descricao">Descrição</label>
+    <input type="text" id="descricao" placeholder="Ex.: Mercado, Uber, Claude Code" autocomplete="off">
+
+    <div id="blocoPagamento">
+      <label class="campo">Cartão / forma de pagamento</label>
+      <div class="chips" id="cartoes"></div>
+      <label class="campo" for="categoria">Categoria</label>
+      <select id="categoria"></select>
+    </div>
+
+    <div id="blocoCartao">
+      <label class="campo">Parcelas</label>
+      <div class="parcelas" role="group" aria-label="Parcelas">
+        <button type="button" data-p="1" aria-pressed="true">À vista</button>
+        <button type="button" data-p="n" aria-pressed="false">Parcelado</button>
+        <button type="button" data-p="fixa" aria-pressed="false">Fixa (todo mês)</button>
+      </div>
+      <div class="linha2">
+        <div id="blocoQtd" hidden>
+          <label class="campo" for="qtd">Quantas vezes</label>
+          <input type="number" id="qtd" min="2" max="60" value="3" inputmode="numeric">
+        </div>
+        <div>
+          <label class="campo" for="mes">Primeira fatura</label>
+          <input type="month" id="mes">
+        </div>
+      </div>
+      <p class="dica" id="dicaMes"></p>
+    </div>
+
+    <div id="blocoData" hidden>
+      <label class="campo" for="data">Data</label>
+      <input type="date" id="data">
+    </div>
+
+    <div id="aviso" class="aviso" role="status" hidden></div>
+
+    <h2>Últimos lançamentos</h2>
+    <ul class="lista" id="recentes"></ul>
+  </section>
+
+  <!-- ===== Tela: parcelas ===== -->
+  <section id="viewParcelas" hidden>
+    <h2 style="margin-top:6px">Assinaturas fixas</h2>
+    <ul class="lista" id="listaFixas"></ul>
+    <h2>Parcelamentos em andamento</h2>
+    <ul class="lista" id="listaParcelas"></ul>
+  </section>
+</main>
+
+<div class="acao" id="barraAcao"><button id="salvar" type="button">Salvar na planilha</button></div>
+
+<dialog id="config">
+  <h2>Ajustes</h2>
+  <p class="dica">Ficam guardados só neste aparelho.</p>
+  <label class="campo" for="cfgUrl">Endereço do app da planilha</label>
+  <input type="url" id="cfgUrl" placeholder="https://script.google.com/macros/s/.../exec">
+  <label class="campo" for="cfgPin">PIN</label>
+  <input type="password" id="cfgPin" autocomplete="off">
+  <div class="botoes">
+    <button type="button" id="cancelarConfig">Cancelar</button>
+    <button type="button" class="principal" id="salvarConfig">Conectar</button>
+  </div>
+</dialog>
+
+<dialog id="dlgEncerrar">
+  <h2 id="encTitulo">Encerrar</h2>
+  <p class="dica">Escolha o último mês em que ela ainda deve ser cobrada.</p>
+  <label class="campo" for="encMes">Última cobrança</label>
+  <input type="month" id="encMes">
+  <div class="botoes">
+    <button type="button" id="encCancelar">Cancelar</button>
+    <button type="button" class="principal" id="encConfirmar">Encerrar</button>
+  </div>
+</dialog>
+
+<script>
+const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const CORES = { 'Mãe': 'var(--mae)', 'Adson': 'var(--adson)', 'Handel': 'var(--handel)', 'Empréstimo Mãe': 'var(--emprestimo)', 'Débito': 'var(--debito)' };
+const $ = id => document.getElementById(id);
+const brl = v => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const estado = { modo: 'cartao', parcelas: '1', cartao: null, dados: null, encerrarId: null };
+
+/* ---------- armazenamento local ---------- */
+function ler(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
+function gravar(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+function lerFila() { try { return JSON.parse(ler('fila') || '[]'); } catch (e) { return []; } }
+function gravarFila(f) { gravar('fila', JSON.stringify(f)); mostrarFila(); }
+function novoUid() { return (crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).slice(2)); }
+
+/* ---------- datas ---------- */
+function hojeISO() { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); }
+function mesISO(offset) { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() + offset); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
+function nomeAba(ym) { const [a, m] = ym.split('-').map(Number); return MESES[m - 1] + '/' + String(a).slice(2); }
+
+/* ---------- comunicação ---------- */
+class ErroRede extends Error {}
+async function api(corpo) {
+  const url = ler('url'), pin = ler('pin');
+  if (!url || !pin) { $('config').showModal(); throw new Error('Configure o endereço e o PIN em Ajustes.'); }
+  let r;
+  try {
+    r = corpo ? await fetch(url, { method: 'POST', body: JSON.stringify(Object.assign({ pin }, corpo)) })
+              : await fetch(url + '?pin=' + encodeURIComponent(pin));
+  } catch (e) { throw new ErroRede('Sem conexão com a planilha.'); }
+  const d = await r.json();
+  if (!d.ok) throw new Error(d.erro || 'Erro desconhecido.');
+  return d;
+}
+
+function aviso(texto, erro) { const a = $('aviso'); a.textContent = texto || ''; a.hidden = !texto; a.classList.toggle('erro', !!erro); }
+
+/* ---------- renderização ---------- */
+function render(d) {
+  if (!d) return;
+  estado.dados = d;
+  gravar('dados', JSON.stringify(d));
+  montarCartoes(d.cartoes);
+  montarCategorias(d.categorias);
+  montarResumo(d.resumo);
+  montarRecentes(d.recentes || []);
+  montarAtalhos(d.atalhos || []);
+  montarParcelas(d.parcelamentos || []);
+  $('iaBox').hidden = !d.ia;
+}
+
+function montarResumo(r) {
+  $('resumo').hidden = !r;
+  if (!r) return;
+  $('rAba').textContent = 'Saldo de ' + r.aba;
+  $('rSaldo').textContent = brl(r.saldo);
+  $('rSaldo').classList.toggle('neg', r.saldo < 0);
+  $('rPrevistos').textContent = r.previstos > 0 ? 'já descontando ' + brl(r.previstos) + ' previstos' : '';
+  const pct = Math.max(0, r.pct || 0);
+  $('rBarra').style.width = Math.min(pct * 100, 100) + '%';
+  $('rBarra').classList.toggle('estourou', pct > r.limite);
+  $('rLimite').style.left = Math.min(r.limite * 100, 100) + '%';
+  $('rTexto').textContent = `Cartão: ${brl(r.cartao)}, ${Math.round(pct * 100)}% das entradas (limite ${Math.round(r.limite * 100)}%).`;
+}
+
+function corDe(nome) { return CORES[nome] || 'var(--outro)'; }
+
+function montarCartoes(lista) {
+  const box = $('cartoes'); box.innerHTML = '';
+  if (!lista.includes(estado.cartao)) {
+    const salvo = ler('ultimoCartao');
+    estado.cartao = lista.includes(salvo) ? salvo : lista[0];
+  }
+  lista.forEach(nome => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'chip'; b.textContent = nome; b.style.background = corDe(nome);
+    b.setAttribute('aria-pressed', String(nome === estado.cartao));
+    b.onclick = () => escolherCartao(nome);
+    box.appendChild(b);
+  });
+}
+function escolherCartao(nome) {
+  estado.cartao = nome;
+  $('cartoes').querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', String(c.textContent === nome)));
+}
+
+function montarCategorias(lista) {
+  const sel = $('categoria'); const atual = sel.value || ler('ultimaCategoria');
+  sel.innerHTML = '';
+  lista.forEach(c => { const o = document.createElement('option'); o.textContent = c; sel.appendChild(o); });
+  if (lista.includes(atual)) sel.value = atual;
+}
+
+function montarAtalhos(lista) {
+  const box = $('atalhos'); box.innerHTML = '';
+  lista.forEach(a => {
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = a.descricao;
+    b.onclick = () => {
+      setModo(a.tipo === 'cartao' ? 'cartao' : 'gasto');
+      $('descricao').value = a.descricao;
+      if (a.cartao) escolherCartao(a.cartao);
+      if (a.categoria) $('categoria').value = a.categoria;
+      $('valor').focus();
+    };
+    box.appendChild(b);
+  });
+  box.hidden = !lista.length || estado.modo === 'entrada';
+}
+
+function montarRecentes(lista) {
+  const ul = $('recentes'); ul.innerHTML = '';
+  if (!lista.length) { ul.innerHTML = '<li class="vazio">Os lançamentos feitos por aqui aparecem nesta lista.</li>'; return; }
+  lista.forEach(x => {
+    const li = document.createElement('li');
+    li.innerHTML = `<span class="nome"></span><span class="info"></span><span class="lado"><strong></strong><button class="link" type="button">Desfazer</button></span>`;
+    li.querySelector('.nome').textContent = x.descricao;
+    li.querySelector('.info').textContent = `${x.aba}, ${x.quando}`;
+    li.querySelector('strong').textContent = (x.tipo === 'entrada' ? '+ ' : '') + brl(x.valor);
+    li.querySelector('button').onclick = () => desfazer(x);
+    ul.appendChild(li);
+  });
+}
+
+function montarParcelas(lista) {
+  const fixas = lista.filter(p => p.fixa), outras = lista.filter(p => !p.fixa);
+  const ulF = $('listaFixas'), ulP = $('listaParcelas');
+  ulF.innerHTML = ''; ulP.innerHTML = '';
+  if (!fixas.length) ulF.innerHTML = '<li class="vazio">Nenhuma assinatura fixa.</li>';
+  if (!outras.length) ulP.innerHTML = '<li class="vazio">Nenhum parcelamento ativo.</li>';
+  lista.forEach(p => {
+    const li = document.createElement('li');
+    li.innerHTML = `<span class="nome"></span><span class="info"></span><span class="lado"><strong></strong></span>`;
+    li.querySelector('.nome').textContent = p.descricao + ' ';
+    const tag = document.createElement('span'); tag.className = 'tag'; tag.textContent = p.cartao; tag.style.background = corDe(p.cartao);
+    li.querySelector('.nome').appendChild(tag);
+    li.querySelector('strong').textContent = brl(p.valor);
+    const info = li.querySelector('.info');
+    if (p.fixa) {
+      info.textContent = `Todo mês desde ${p.inicio}`;
+      const b = document.createElement('button'); b.className = 'link'; b.type = 'button'; b.textContent = 'Encerrar';
+      b.onclick = () => abrirEncerrar(p);
+      li.querySelector('.lado').appendChild(b);
+      ulF.appendChild(li);
+    } else {
+      info.textContent = p.futuro ? `Começa em ${p.inicio}, ${p.total}x` :
+        `Parcela ${p.atual} de ${p.total}, ${p.restantes === 1 ? 'última' : 'faltam ' + p.restantes}`;
+      const barra = document.createElement('div'); barra.className = 'progresso';
+      barra.innerHTML = `<i style="width:${Math.round((p.futuro ? 0 : p.atual) / p.total * 100)}%"></i>`;
+      info.appendChild(barra);
+      ulP.appendChild(li);
+    }
+  });
+}
+
+/* ---------- modo e campos ---------- */
+function setModo(m) {
+  estado.modo = m;
+  document.querySelectorAll('.modo button').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.modo === m)));
+  $('blocoCartao').hidden = m !== 'cartao';
+  $('blocoData').hidden = m === 'cartao';
+  $('blocoPagamento').hidden = m === 'entrada';
+  $('atalhos').hidden = m === 'entrada' || !$('atalhos').children.length;
+  $('dicaValor').textContent = m === 'cartao' ? 'Valor de cada parcela.' : m === 'gasto' ? 'Valor do gasto.' : 'Valor que entrou.';
+  $('descricao').placeholder = m === 'entrada' ? 'Ex.: FGTS, 13º, freela' : 'Ex.: Mercado, Uber, Claude Code';
+  if (m === 'gasto' && estado.dados && estado.dados.cartoes.includes('Débito') && estado.cartao !== 'Débito') escolherCartao('Débito');
+}
+function setParcelas(p) {
+  estado.parcelas = p;
+  document.querySelectorAll('.parcelas button').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.p === p)));
+  $('blocoQtd').hidden = p !== 'n';
+  atualizarDica();
+}
+function atualizarDica() {
+  const m = $('mes').value;
+  $('dicaMes').textContent = m ? `Entra na aba ${nomeAba(m)}` + (estado.parcelas === 'fixa' ? ' e em todos os meses seguintes.' : '.') : '';
+}
+
+/* ---------- ações ---------- */
+function montarLancamento() {
+  const valor = Number($('valor').value.replace(/\s/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.'));
+  const descricao = $('descricao').value.trim();
+  if (!(valor > 0)) throw new Error('Digite um valor maior que zero.');
+  if (!descricao) throw new Error('Escreva uma descrição.');
+  const l = { acao: 'salvar', uid: novoUid(), tipo: estado.modo, valor, descricao };
+  if (estado.modo !== 'entrada') {
+    if (!estado.cartao) throw new Error('Escolha o cartão.');
+    l.cartao = estado.cartao; l.categoria = $('categoria').value;
+  }
+  if (estado.modo === 'cartao') {
+    l.mes = $('mes').value;
+    l.parcelas = estado.parcelas === 'n' ? Number($('qtd').value) : estado.parcelas;
+    if (!l.mes) throw new Error('Escolha o mês da primeira fatura.');
+    if (estado.parcelas === 'n' && !(l.parcelas >= 2)) throw new Error('Parcelado precisa ter 2 vezes ou mais.');
+  } else {
+    l.data = $('data').value;
+    if (!l.data) throw new Error('Escolha a data.');
+  }
+  return l;
+}
+
+async function salvar() {
+  let l;
+  try { l = montarLancamento(); } catch (e) { return aviso(e.message, true); }
+  const botao = $('salvar'); botao.disabled = true; botao.textContent = 'Salvando…';
+  const limpar = () => {
+    if (l.cartao) gravar('ultimoCartao', l.cartao);
+    if (l.categoria) gravar('ultimaCategoria', l.categoria);
+    $('valor').value = ''; $('descricao').value = ''; $('iaTexto').value = '';
+  };
+  try {
+    if (!navigator.onLine) throw new ErroRede();
+    const d = await api(l);
+    limpar(); render(d.dados); aviso('Salvo. ' + d.msg);
+  } catch (e) {
+    if (e instanceof ErroRede) {
+      gravarFila(lerFila().concat([l])); limpar();
+      aviso('Sem internet: guardei aqui e envio sozinho quando a conexão voltar.');
+    } else aviso('Não salvou: ' + e.message, true);
+  } finally {
+    botao.disabled = false; botao.textContent = 'Salvar na planilha';
+  }
+}
+
+let enviando = false;
+async function enviarFila() {
+  if (enviando || !navigator.onLine) return;
+  let fila = lerFila(); if (!fila.length) return;
+  enviando = true;
+  try {
+    while (fila.length) {
+      try {
+        const d = await api(fila[0]);
+        render(d.dados);
+      } catch (e) {
+        if (e instanceof ErroRede) break;
+        aviso(`Um lançamento guardado (${fila[0].descricao}) não foi aceito: ${e.message}`, true);
+      }
+      fila = fila.slice(1); gravarFila(fila);
+    }
+    if (!fila.length) aviso('Lançamentos guardados enviados para a planilha.');
+  } finally { enviando = false; }
+}
+function mostrarFila() {
+  const n = lerFila().length;
+  $('fila').hidden = !n;
+  $('fila').textContent = n === 1 ? '1 lançamento esperando internet para ir à planilha.' : `${n} lançamentos esperando internet para ir à planilha.`;
+}
+
+async function desfazer(x) {
+  if (!confirm(`Desfazer "${x.descricao}" de ${brl(x.valor)}? A linha sai da planilha.`)) return;
+  try { const d = await api({ acao: 'desfazer', uid: x.uid }); render(d.dados); aviso(d.msg); }
+  catch (e) { aviso('Não desfez: ' + e.message, true); }
+}
+
+function abrirEncerrar(p) {
+  estado.encerrarId = p.id;
+  $('encTitulo').textContent = 'Encerrar ' + p.descricao;
+  $('encMes').value = mesISO(0);
+  $('dlgEncerrar').showModal();
+}
+$('encCancelar').onclick = () => $('dlgEncerrar').close();
+$('encConfirmar').onclick = async () => {
+  const mes = $('encMes').value; if (!mes) return;
+  $('dlgEncerrar').close();
+  try { const d = await api({ acao: 'encerrar', id: estado.encerrarId, mes }); render(d.dados); alert(d.msg); }
+  catch (e) { alert('Não encerrou: ' + e.message); }
+};
+
+$('iaBox').onsubmit = async ev => {
+  ev.preventDefault();
+  const texto = $('iaTexto').value.trim(); if (!texto) return;
+  const b = $('iaBtn'); b.disabled = true; b.textContent = 'Lendo…';
+  try {
+    const { lancamento: l } = await api({ acao: 'interpretar', texto });
+    setModo(l.tipo || 'gasto');
+    if (l.valor) $('valor').value = String(l.valor).replace('.', ',');
+    if (l.descricao) $('descricao').value = l.descricao;
+    if (l.cartao) escolherCartao(l.cartao);
+    if (l.categoria) $('categoria').value = l.categoria;
+    if (l.tipo === 'cartao') {
+      if (l.parcelas === 'fixa') setParcelas('fixa');
+      else if (Number(l.parcelas) > 1) { setParcelas('n'); $('qtd').value = l.parcelas; }
+      else setParcelas('1');
+      if (l.mes) { $('mes').value = l.mes; atualizarDica(); }
+    } else if (l.data) {
+      $('data').value = l.tipo === 'entrada' ? l.data : l.data;
+    }
+    aviso(l.duvida ? l.duvida : 'Confira os campos e toque em Salvar.', !!l.duvida);
+  } catch (e) {
+    aviso(e instanceof ErroRede ? 'A leitura por IA precisa de internet.' : 'Não entendi: ' + e.message, true);
+  } finally { b.disabled = false; b.textContent = 'Preencher'; }
+};
+
+async function carregar() {
+  const cache = ler('dados'); if (cache) { try { render(JSON.parse(cache)); } catch (e) {} }
+  if (!ler('url') || !ler('pin')) { $('config').showModal(); return; }
+  try { render(await api()); await enviarFila(); }
+  catch (e) { if (!(e instanceof ErroRede)) aviso(e.message + ' Confira em Ajustes.', true); else if (!cache) aviso('Sem conexão com a planilha.', true); }
+}
+
+/* ---------- eventos ---------- */
+document.querySelectorAll('.modo button').forEach(b => b.onclick = () => { setModo(b.dataset.modo); aviso(''); });
+document.querySelectorAll('.parcelas button').forEach(b => b.onclick = () => setParcelas(b.dataset.p));
+document.querySelectorAll('[data-view]').forEach(b => b.onclick = () => {
+  const v = b.dataset.view;
+  document.querySelectorAll('[data-view]').forEach(x => x === b ? x.setAttribute('aria-current', 'page') : x.removeAttribute('aria-current'));
+  $('viewLancar').hidden = v !== 'lancar'; $('viewParcelas').hidden = v !== 'parcelas'; $('barraAcao').hidden = v !== 'lancar';
+});
+$('mes').oninput = atualizarDica;
+$('salvar').onclick = salvar;
+$('abrirConfig').onclick = () => { $('cfgUrl').value = ler('url'); $('cfgPin').value = ler('pin'); $('config').showModal(); };
+$('cancelarConfig').onclick = () => $('config').close();
+$('salvarConfig').onclick = () => { gravar('url', $('cfgUrl').value.trim()); gravar('pin', $('cfgPin').value.trim()); $('config').close(); carregar(); };
+window.addEventListener('online', enviarFila);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { enviarFila(); if (navigator.onLine && ler('url')) api().then(render).catch(() => {}); } });
+
+/* ---------- início ---------- */
+$('mes').value = mesISO(1); $('data').value = hojeISO();
+setModo('cartao'); atualizarDica(); mostrarFila(); carregar();
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
+</script>
+</body>
+</html>
