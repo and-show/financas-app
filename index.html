@@ -115,6 +115,10 @@
 
   .aviso { margin-top: 16px; padding: 12px 14px; border-radius: 12px; font-size: .95rem; border: 1px solid var(--line); background: var(--surface); }
   .aviso.erro { color: var(--erro); border-color: var(--erro); }
+  .aviso-botoes { display: flex; gap: 8px; margin-top: 12px; }
+  .aviso-botoes button { flex: 1; padding: 12px 8px; border-radius: 12px; font: 600 .92rem/1 system-ui, sans-serif; border: 1px solid var(--line); background: none; color: var(--ink); }
+  .aviso-botoes button.principal { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .aviso-botoes button:disabled { opacity: .55; }
   .fila { margin: 0 0 12px; padding: 10px 14px; border-radius: 12px; background: var(--surface); border: 1px dashed var(--muted); font-size: .9rem; }
 
   /* aviso flutuante */
@@ -236,6 +240,14 @@
       <button type="submit" id="iaBtn">Preencher</button>
     </form>
 
+    <div id="aviso" class="aviso" role="status" hidden>
+      <span id="avisoTexto"></span>
+      <div class="aviso-botoes" id="avisoBotoes" hidden>
+        <button type="button" class="principal" id="iaSalvar">Salvar na planilha</button>
+        <button type="button" id="iaRevisar">Revisar campos</button>
+      </div>
+    </div>
+
     <div class="modo" role="group" aria-label="Tipo de lançamento">
       <button type="button" data-modo="cartao" aria-pressed="true">Cartão</button>
       <button type="button" data-modo="gasto" aria-pressed="false">Gasto do mês</button>
@@ -285,8 +297,6 @@
       <label class="campo" for="data">Data</label>
       <input type="date" id="data">
     </div>
-
-    <div id="aviso" class="aviso" role="status" hidden></div>
 
     <h2>Últimos lançamentos</h2>
     <ul class="lista" id="recentes"></ul>
@@ -429,7 +439,28 @@ async function api(corpo, query) {
   return d;
 }
 
-function aviso(texto, erro) { const a = $('aviso'); a.textContent = texto || ''; a.hidden = !texto; a.classList.toggle('erro', !!erro); }
+// Retorno da IA, logo abaixo da caixa de texto (com botão de salvar quando dá para salvar)
+function aviso(texto, erro, comBotoes) {
+  $('avisoTexto').textContent = texto || '';
+  $('aviso').hidden = !texto; $('aviso').classList.toggle('erro', !!erro);
+  $('avisoBotoes').hidden = !comBotoes;
+}
+
+// Frase curta com o que está nos campos, para conferir antes de salvar
+function descreverLancamento(l) {
+  const partes = [l.descricao, brl(l.valor)];
+  if (l.tipo === 'cartao') {
+    if (l.parcelas === 'fixa') partes[1] += ' todo mês';
+    else if (l.parcelas > 1) partes[1] = `${l.parcelas}x de ${brl(l.valor)}`;
+    partes.push(l.cartao, l.categoria, 'fatura de ' + nomeAba(l.mes));
+  } else {
+    const [, m, d] = l.data.split('-');
+    if (l.tipo === 'gasto') partes.push(l.cartao, l.categoria);
+    partes.push(`${d}/${m}`);
+  }
+  const tipo = { cartao: 'Cartão', gasto: 'Gasto do mês', entrada: 'Entrada' }[l.tipo];
+  return `${tipo}: ${partes.filter(Boolean).join(' · ')}`;
+}
 
 let toastTimer;
 function toast(texto, erro) {
@@ -842,6 +873,7 @@ function montarLancamento() {
   if (estado.modo !== 'entrada') {
     if (!estado.cartao) throw new Error('Escolha o cartão.');
     l.cartao = estado.cartao; l.categoria = $('categoria').value;
+    if (!l.categoria) throw new Error('Escolha a categoria.');
   }
   if (estado.modo === 'cartao') {
     l.mes = $('mes').value;
@@ -930,13 +962,14 @@ $('iaBox').onsubmit = async ev => {
   ev.preventDefault();
   const texto = $('iaTexto').value.trim(); if (!texto) return;
   const b = $('iaBtn'); b.disabled = true; b.textContent = 'Lendo…';
+  aviso('Lendo o que você escreveu… pode levar alguns segundos.');
   try {
     const { lancamento: l } = await api({ acao: 'interpretar', texto });
     setModo(l.tipo || 'gasto');
-    if (l.valor) $('valor').value = String(l.valor).replace('.', ',');
+    if (l.valor) $('valor').value = Number(l.valor).toFixed(2).replace('.', ',');
     if (l.descricao) $('descricao').value = l.descricao;
     if (l.cartao) escolherCartao(l.cartao);
-    if (l.categoria) $('categoria').value = l.categoria;
+    if (l.categoria && [...$('categoria').options].some(o => o.value === l.categoria)) $('categoria').value = l.categoria;
     if (l.tipo === 'cartao') {
       if (l.parcelas === 'fixa') setParcelas('fixa');
       else if (Number(l.parcelas) > 1) { $('qtd').value = l.parcelas; setParcelas('n'); }
@@ -946,7 +979,11 @@ $('iaBox').onsubmit = async ev => {
       $('data').value = l.data;
     }
     atualizarDicaValor();
-    aviso(l.duvida ? l.duvida : 'Confira os campos e toque em Salvar.', !!l.duvida);
+    if (l.duvida) aviso(l.duvida + ' Complete nos campos abaixo e toque em Salvar.', true);
+    else {
+      try { aviso('Entendi: ' + descreverLancamento(montarLancamento()), false, true); }
+      catch (e) { aviso(e.message + ' Complete nos campos abaixo e toque em Salvar.', true); }
+    }
   } catch (e) {
     aviso(e instanceof ErroRede ? 'A leitura por IA precisa de internet.' : 'Não entendi: ' + e.message, true);
   } finally { b.disabled = false; b.textContent = 'Preencher'; }
@@ -988,6 +1025,8 @@ $('mes').oninput = atualizarDica;
 $('qtd').oninput = () => { atualizarDica(); atualizarDicaValor(); };
 $('valor').oninput = atualizarDicaValor;
 $('salvar').onclick = salvar;
+$('iaSalvar').onclick = async () => { $('iaSalvar').disabled = true; try { await salvar(); } finally { $('iaSalvar').disabled = false; } };
+$('iaRevisar').onclick = () => { aviso(''); $('descricao').scrollIntoView({ behavior: 'smooth', block: 'center' }); };
 $('sync').onclick = carregar;
 $('privado').onclick = () => {
   const on = !document.body.classList.contains('privado');

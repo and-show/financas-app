@@ -93,7 +93,7 @@ function salvar(d, origem) {
   else throw new Error('Tipo de lançamento desconhecido.');
 
   log.appendRow([
-    d.uid || Utilities.getUuid(), new Date(), origem, d.tipo, r.aba, r.linha, r.ref || '',
+    d.uid || Utilities.getUuid(), new Date(), origem, d.tipo, "'" + r.aba, r.linha, r.ref || '',   // ' = guarda "Out/26" como texto, não como data
     d.descricao.trim(), Number(d.valor), d.cartao || '', d.categoria || '', 'ok'
   ]);
   return { msg: r.msg };
@@ -155,7 +155,8 @@ function desfazer(uid) {
   const vals = log.getRange(2, 1, n, 12).getValues();
   const i = vals.findIndex(r => r[0] === uid && r[11] === 'ok');
   if (i === -1) throw new Error('Esse lançamento já foi desfeito ou não existe.');
-  const [, , , tipo, aba, linha, , descricao] = vals[i];
+  const [, , , tipo, abaLida, linha, , descricao] = vals[i];
+  const aba = textoAba(abaLida);
   const sh = planilha().getSheetByName(aba);
   if (!sh) throw new Error(`A aba ${aba} não existe mais.`);
 
@@ -210,7 +211,7 @@ function recentes() {
   if (n < 1) return [];
   return log.getRange(2, 1, n, 12).getValues()
     .filter(r => r[11] === 'ok').slice(-8).reverse()
-    .map(r => ({ uid: r[0], quando: Utilities.formatDate(new Date(r[1]), FUSO, 'dd/MM HH:mm'), origem: r[2], tipo: r[3], aba: r[4], descricao: r[7], valor: r[8], cartao: r[9] }));
+    .map(r => ({ uid: r[0], quando: Utilities.formatDate(new Date(r[1]), FUSO, 'dd/MM HH:mm'), origem: r[2], tipo: r[3], aba: textoAba(r[4]), descricao: r[7], valor: r[8], cartao: r[9] }));
 }
 
 function atalhos() {
@@ -367,6 +368,13 @@ Frase: """${String(texto).slice(0, 300)}"""`;
 function planilha() { return SpreadsheetApp.getActive(); }
 function prop(k) { return PropertiesService.getScriptProperties().getProperty(k); }
 function nomeAba(ano, mes) { return MESES[mes - 1] + '/' + String(ano).slice(2); }
+
+// Registros antigos do App_Log viraram data ("out./26"); volta para o nome da aba
+function textoAba(v) {
+  if (!(v instanceof Date)) return String(v);
+  const [m, a] = Utilities.formatDate(v, planilha().getSpreadsheetTimeZone(), 'M-yyyy').split('-').map(Number);
+  return nomeAba(a, m);
+}
 
 function abaMes(aba) {
   const sh = planilha().getSheetByName(aba);
