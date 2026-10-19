@@ -6,8 +6,8 @@
 
 const MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 const FUSO = 'America/Fortaleza';
-// Ordem de tentativa: o Pro mais recente primeiro; se não estiver disponível na sua chave, cai para o Flash.
-const MODELOS_GEMINI = ['gemini-pro-latest', 'gemini-3.1-pro-preview', 'gemini-flash-latest'];
+// Ordem de tentativa: Flash primeiro; se estiver ocupado ou indisponível, cai para o Flash-Lite.
+const MODELOS_GEMINI = ['gemini-flash-latest', 'gemini-flash-lite-latest'];
 
 /* =========================================================
  * 1) CONFIGURAÇÃO — preencha, rode "configurar" uma vez e
@@ -334,21 +334,26 @@ Frase: """${String(texto).slice(0, 300)}"""`;
   });
 
   const modelos = [prop('GEMINI_MODEL')].concat(MODELOS_GEMINI).filter(Boolean);
-  let ultimoErro = '';
-  for (const modelo of modelos) {
+  const erros = [];
+  for (const modelo of modelos) for (let tentativa = 1; tentativa <= 2; tentativa++) {
     const r = UrlFetchApp.fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent`, {
       method: 'post', contentType: 'application/json', payload,
       headers: { 'x-goog-api-key': key }, muteHttpExceptions: true
     });
     const code = r.getResponseCode();
-    if (code === 404 || code === 403 || code === 429) {   // modelo inexistente, sem acesso ou sem cota: tenta o próximo
-      ultimoErro = `${modelo} respondeu ${code}`;
-      continue;
+    if (code === 500 || code === 503) {                   // modelo ocupado: espera um pouco e tenta de novo, depois o próximo
+      erros.push(`${modelo} ${code}`);
+      if (tentativa === 1) { Utilities.sleep(1500); continue; }
+      break;
+    }
+    if (code === 404 || code === 403 || code === 429) {   // modelo inexistente, sem acesso ou sem cota: vai para o próximo
+      erros.push(`${modelo} ${code}`);
+      break;
     }
     if (code !== 200) {
       let msg = r.getContentText();
       try { msg = JSON.parse(msg).error.message; } catch (e) {}
-      throw new Error('Gemini respondeu erro ' + code + ': ' + msg);
+      throw new Error(`Gemini (${modelo}) respondeu erro ${code}: ${msg}`);
     }
     const corpo = JSON.parse(r.getContentText());
     const txt = ((corpo.candidates || [])[0] || {}).content?.parts?.map(p => p.text || '').join('') || '';
@@ -359,7 +364,7 @@ Frase: """${String(texto).slice(0, 300)}"""`;
     if (l.tipo !== 'cartao' && !/^\d{4}-\d{2}-\d{2}$/.test(l.data || '')) l.data = hoje;
     return l;
   }
-  throw new Error('Nenhum modelo do Gemini respondeu (' + ultimoErro + '). Defina GEMINI_MODEL nas propriedades do script.');
+  throw new Error(`O Gemini não respondeu agora (${erros.join(', ')}). Tente de novo em alguns minutos ou preencha os campos à mão.`);
 }
 
 /* =========================================================
